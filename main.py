@@ -19,10 +19,10 @@ def generate_and_post_telegram(request):
 
     # 1. THE GEMINI API CALL AND CONTENT GENERATION
     gemini_prompt = """
-    Generate exactly TWO distinct, short, and highly engaging Telegram posts for a channel focused on passive income and coding/development. 
+    Generate exactly TWO distinct, short, and highly engaging Telegram posts for a channel focused on passive income and mobile development. 
     
     * **Post 1 (Passive Income):** Find the single most important, current news item or simple tip regarding passive income, side hustles, or financial technology in the last 24 hours. The summary must be under 75 words.
-    * **Post 2 (Coding News/Dev):** Find the latest coding-related news, trending development tools, programming tips, or interesting tech updates. Focus on practical insights, new frameworks, coding best practices, or developer tools. Include a very short code snippet or tool recommendation if relevant. The explanation must be under 75 words.
+    * **Post 2 (Code/Dev):** Provide one quick, practical mobile development or Python coding idea/tip. Include a very short code snippet or tool recommendation. The explanation must be under 50 words.
     
     IMPORTANT: Output ONLY the two posts directly. Do NOT include any introductory text, explanations, or meta-commentary like "here are two posts" or "here is the content". Start immediately with the first post.
     
