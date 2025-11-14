@@ -19,10 +19,10 @@ def generate_and_post_telegram(request):
 
     # 1. THE GEMINI API CALL AND CONTENT GENERATION
     gemini_prompt = """
-    Generate exactly TWO distinct, short, and highly engaging Telegram posts for a channel focused on passive income and mobile development. 
+    Generate exactly TWO distinct, short, and highly engaging Telegram posts for a channel focused on passive income and coding/development. 
     
     * **Post 1 (Passive Income):** Find the single most important, current news item or simple tip regarding passive income, side hustles, or financial technology in the last 24 hours. The summary must be under 75 words.
-    * **Post 2 (Code/Dev):** Provide one quick, practical mobile development or Python coding idea/tip. Include a very short code snippet or tool recommendation. The explanation must be under 50 words.
+    * **Post 2 (Coding News/Dev):** Find the latest coding-related news, trending development tools, programming tips, or interesting tech updates. Focus on practical insights, new frameworks, coding best practices, or developer tools. Include a very short code snippet or tool recommendation if relevant. The explanation must be under 75 words.
     
     IMPORTANT: Output ONLY the two posts directly. Do NOT include any introductory text, explanations, or meta-commentary like "here are two posts" or "here is the content". Start immediately with the first post.
     
@@ -96,11 +96,23 @@ def generate_and_post_telegram(request):
                 print(f"Retrying in {wait_time} seconds...")
                 time.sleep(wait_time)
             else:
-                # Last attempt failed or non-retryable error
-                post_text = f"🚨 Daily Digest Error: Content generation failed today. ({error_str[:100]})"
+                # Last attempt failed or non-retryable error - don't set error message
+                # We'll skip posting to Telegram if post_text is None
+                post_text = None
+                print(f"All retry attempts failed. Skipping Telegram post.")
                 break
 
     # 2. TELEGRAM DELIVERY
+    # Only post if we have valid content from Gemini (not an error)
+    if post_text is None or post_text.strip() == "":
+        print("No content generated from Gemini API. Skipping Telegram post.")
+        return "Content generation failed. No post sent.", 200
+    
+    # Check if post_text contains error indicators
+    if "🚨" in post_text or "error" in post_text.lower() or "failed" in post_text.lower():
+        print("Error message detected in content. Skipping Telegram post.")
+        return "Content generation failed. No post sent.", 200
+    
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     
     # Ensure channel ID has @ prefix if it's a username
