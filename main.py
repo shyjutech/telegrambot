@@ -33,6 +33,7 @@ def generate_and_post_telegram(request):
     max_retries = 3
     retry_delay = 2  # seconds
     post_text = None
+    api_success = False
     
     for attempt in range(max_retries):
         try:
@@ -47,6 +48,8 @@ def generate_and_post_telegram(request):
                 )
             )
             
+            # Check if response is successful (equivalent to HTTP 200/201)
+            # If no exception was raised, the API call was successful
             raw_text = response.text
             
             # Clean up the response - remove common introductory phrases
@@ -75,7 +78,9 @@ def generate_and_post_telegram(request):
                     post_text = post_text[idx:].strip()
                     break
             
-            print(f"Successfully generated content on attempt {attempt + 1}")
+            # API call succeeded (equivalent to 200/201)
+            api_success = True
+            print(f"Successfully generated content on attempt {attempt + 1} (API response: success)")
             break  # Success, exit retry loop
             
         except Exception as e:
@@ -96,21 +101,20 @@ def generate_and_post_telegram(request):
                 print(f"Retrying in {wait_time} seconds...")
                 time.sleep(wait_time)
             else:
-                # Last attempt failed or non-retryable error - don't set error message
-                # We'll skip posting to Telegram if post_text is None
+                # Last attempt failed or non-retryable error
+                api_success = False
                 post_text = None
-                print(f"All retry attempts failed. Skipping Telegram post.")
+                print(f"All retry attempts failed. API response was not successful (200/201). Skipping Telegram post.")
                 break
 
     # 2. TELEGRAM DELIVERY
-    # Only post if we have valid content from Gemini (not an error)
-    if post_text is None or post_text.strip() == "":
-        print("No content generated from Gemini API. Skipping Telegram post.")
+    # Only post if API response was successful (200/201 equivalent) and we have content
+    if not api_success:
+        print("Gemini API did not return success response (200/201). Skipping Telegram post.")
         return "Content generation failed. No post sent.", 200
     
-    # Check if post_text contains error indicators
-    if "🚨" in post_text or "error" in post_text.lower() or "failed" in post_text.lower():
-        print("Error message detected in content. Skipping Telegram post.")
+    if post_text is None or post_text.strip() == "":
+        print("No content generated from Gemini API despite success response. Skipping Telegram post.")
         return "Content generation failed. No post sent.", 200
     
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
